@@ -3,6 +3,12 @@ import { Button, Col, Form, Row, Modal } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import "./MessageForm.css";
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognition = new SpeechRecognition();
+recognition.continuous = true;
+
 function MessageForm() {
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -60,22 +66,21 @@ function MessageForm() {
     setShowModal(false);
   }
 
-  function handleStart() {
-    // TODO: start recording
-  }
+  const handleStart = () => {
+    recognition.start();
+  };
 
-  function handleStop() {
-    // TODO: stop recording
-  }
-
-  function handleReset() {
-    // TODO: reset recording
-  }
-
-  function handleSubmitMessage() {
-    // TODO: submit message
+  const handleStop = () => {
+    recognition.stop();
+  };
+  const handleReset = () => {
+    recognition.abort();
     setMessage("");
-  }
+  };
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    setMessage(transcript);
+  };
   return (
     <>
       <div className="messages-output">
@@ -204,8 +209,13 @@ function MessageForm() {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleModalHide}>
-            Close
+          <Button
+            variant="primary"
+            type="submit"
+            onSubmit={handleSubmit}
+            onClick={handleModalHide}
+          >
+            Send
           </Button>
           <Button variant="success" onClick={handleStart}>
             Start
