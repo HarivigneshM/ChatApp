@@ -5,6 +5,7 @@ import { AppContext } from "../context/appContext";
 import "./MessageForm.css";
 function MessageForm() {
   const [message, setMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
   const user = useSelector((state) => state.user);
   const { socket, currentRoom, setMessages, messages, privateMemberMsg } =
     useContext(AppContext);
@@ -51,44 +52,30 @@ function MessageForm() {
     socket.emit("message-room", roomId, message, user, time, todayDate);
     setMessage("");
   }
-  const [showModal, setShowModal] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [timer, setTimer] = useState(null);
-  const handleImageClick = () => {
-    // Function to handle image click and open modal
+  function handleModalShow() {
     setShowModal(true);
-  };
+  }
 
-  const handleStart = () => {
-    // Function to handle Start button click
-    const newTimer = setInterval(() => {
-      // Update timer every second
-      console.log("Timer started");
-    }, 1000);
-    setTimer(newTimer);
-  };
-
-  const handleStop = () => {
-    // Function to handle Stop button click
-    clearInterval(timer); // Clear the timer
-    console.log("Timer stopped");
-  };
-
-  const handleReset = () => {
-    // Function to handle Reset button click
-    setInputValue(""); // Clear input value
-    clearInterval(timer); // Clear the timer
-    console.log("Timer reset");
-  };
-
-  const handleCloseModal = () => {
-    // Function to handle modal close
-    setInputValue(""); // Clear input value
-    clearInterval(timer); // Clear the timer
+  function handleModalHide() {
     setShowModal(false);
-    console.log("Modal closed");
-  };
+  }
 
+  function handleStart() {
+    // TODO: start recording
+  }
+
+  function handleStop() {
+    // TODO: stop recording
+  }
+
+  function handleReset() {
+    // TODO: reset recording
+  }
+
+  function handleSubmitMessage() {
+    // TODO: submit message
+    setMessage("");
+  }
   return (
     <>
       <div className="messages-output">
@@ -193,39 +180,41 @@ function MessageForm() {
                   height: "25px",
                   objectFit: "fill",
                 }}
-                onClick={handleImageClick}
+                onClick={handleModalShow}
               />
             </Button>
           </Col>
         </Row>
       </Form>
-
-      <Modal show={showModal} onHide={handleCloseModal}>
+      <Modal show={showModal} onHide={handleModalHide}>
         <Modal.Header closeButton>
-          <Modal.Title>Modal Title</Modal.Title>
+          <Modal.Title>To Text</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form.Group>
-            <Form.Label>Value:</Form.Label>
-            <Form.Control
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-            />
-          </Form.Group>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group controlId="messageInput">
+              <Form.Label>Message:</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Enter your message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
+          <Button variant="secondary" onClick={handleModalHide}>
             Close
+          </Button>
+          <Button variant="success" onClick={handleStart}>
+            Start
           </Button>
           <Button variant="danger" onClick={handleStop}>
             Stop
           </Button>
           <Button variant="warning" onClick={handleReset}>
             Reset
-          </Button>
-          <Button variant="success" onClick={handleStart}>
-            Start
           </Button>
         </Modal.Footer>
       </Modal>
