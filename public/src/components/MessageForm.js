@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Button, Col, Form, Row } from "react-bootstrap";
+import { Button, Col, Form, Row, Modal } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import "./MessageForm.css";
@@ -51,6 +51,44 @@ function MessageForm() {
     socket.emit("message-room", roomId, message, user, time, todayDate);
     setMessage("");
   }
+  const [showModal, setShowModal] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [timer, setTimer] = useState(null);
+  const handleImageClick = () => {
+    // Function to handle image click and open modal
+    setShowModal(true);
+  };
+
+  const handleStart = () => {
+    // Function to handle Start button click
+    const newTimer = setInterval(() => {
+      // Update timer every second
+      console.log("Timer started");
+    }, 1000);
+    setTimer(newTimer);
+  };
+
+  const handleStop = () => {
+    // Function to handle Stop button click
+    clearInterval(timer); // Clear the timer
+    console.log("Timer stopped");
+  };
+
+  const handleReset = () => {
+    // Function to handle Reset button click
+    setInputValue(""); // Clear input value
+    clearInterval(timer); // Clear the timer
+    console.log("Timer reset");
+  };
+
+  const handleCloseModal = () => {
+    // Function to handle modal close
+    setInputValue(""); // Clear input value
+    clearInterval(timer); // Clear the timer
+    setShowModal(false);
+    console.log("Modal closed");
+  };
+
   return (
     <>
       <div className="messages-output">
@@ -155,11 +193,42 @@ function MessageForm() {
                   height: "25px",
                   objectFit: "fill",
                 }}
+                onClick={handleImageClick}
               />
             </Button>
           </Col>
         </Row>
       </Form>
+
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>Modal Title</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group>
+            <Form.Label>Value:</Form.Label>
+            <Form.Control
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Close
+          </Button>
+          <Button variant="danger" onClick={handleStop}>
+            Stop
+          </Button>
+          <Button variant="warning" onClick={handleReset}>
+            Reset
+          </Button>
+          <Button variant="success" onClick={handleStart}>
+            Start
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
