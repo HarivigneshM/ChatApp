@@ -44,6 +44,7 @@ function MessageForm() {
   const todayDate = getFormattedDate();
 
   socket.off("room-messages").on("room-messages", (roomMessages) => {
+    console.log(roomMessages);
     setMessages(roomMessages);
   });
 

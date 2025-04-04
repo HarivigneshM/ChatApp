@@ -8,7 +8,7 @@ import "./Sidebar.css";
 function Sidebar() {
     const user = useSelector((state) => state.user);
     const dispatch = useDispatch();
-    const { socket, setMembers, members, setCurrentRoom, setRooms, privateMemberMsg, rooms, setPrivateMemberMsg, currentRoom } = useContext(AppContext);
+    const { socket, setMembers, members, setCurrentRoom, setRooms, chatBots, setChatBots, privateMemberMsg, rooms, setPrivateMemberMsg, currentRoom } = useContext(AppContext);
 
     function joinRoom(room, isPublic = true) {
         if (!user) {
@@ -32,6 +32,7 @@ function Sidebar() {
         if (user) {
             setCurrentRoom("general");
             getRooms();
+            getChatBots();
             socket.emit("join-room", "general");
             socket.emit("new-user");
         }
@@ -44,9 +45,14 @@ function Sidebar() {
     function getRooms() {
         fetch("http://localhost:5001/rooms")
             .then((res) => res.json())
-            .then((data) => setRooms(data));
+            .then((data) => {setRooms(data)});
     }
 
+    function getChatBots(){
+        fetch("http://localhost:5001/chatbots")
+            .then((res) => res.json())
+            .then((data) => setChatBots(data));
+    }
     function orderIds(id1, id2) {
         if (id1 > id2) {
             return id1 + "-" + id2;
@@ -57,8 +63,15 @@ function Sidebar() {
 
     function handlePrivateMemberMsg(member) {
         setPrivateMemberMsg(member);
-        const roomId = orderIds(user._id, member._id);
-        joinRoom(roomId, false);
+        if(member._id !=undefined){
+            const roomId = orderIds(user._id, member._id);
+            joinRoom(roomId, false);
+        } 
+        else{
+            const roomId = orderIds(user._id, member);
+            joinRoom(roomId, false);
+        } 
+
     }
 
     if (!user) {
@@ -74,6 +87,7 @@ function Sidebar() {
                     </ListGroup.Item>
                 ))}
             </ListGroup>
+            <br />
             <h2>Members</h2>
             {members.map((member) => (
                 <ListGroup.Item key={member.id} style={{ cursor: "pointer" }} active={privateMemberMsg?._id == member?._id} onClick={() => handlePrivateMemberMsg(member)} disabled={member._id === user._id}>
@@ -93,6 +107,15 @@ function Sidebar() {
                     </Row>
                 </ListGroup.Item>
             ))}
+            <br />
+            <h2>Chat Bot</h2>
+            <ListGroup>
+                {chatBots.map((bot, idx) => (
+                    <ListGroup.Item key={idx} onClick={() => handlePrivateMemberMsg(bot)} active={bot == currentRoom} style={{ cursor: "pointer", display: "flex", justifyContent: "space-between" }}>
+                        {bot} {currentRoom !== bot && <span className="badge rounded-pill bg-primary">{user.newMessages[bot]}</span>}
+                    </ListGroup.Item>
+                ))}
+            </ListGroup>
         </>
     );
 }

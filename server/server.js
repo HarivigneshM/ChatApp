@@ -4,6 +4,8 @@ const userRoutes = require('./routes/userRoutes')
 const User = require('./models/User');
 const Message = require('./models/Message')
 const rooms = ['general', 'tech', 'finance', 'crypto'];
+const bots = ['career'];
+const prompt = ['You are a career advisor. Answer the user\'s questions about career advice. Answer in 10 words or less.'];
 const cors = require('cors');
 
 app.use(express.urlencoded({extended: true}));
@@ -60,13 +62,39 @@ io.on('connection', (socket)=> {
     socket.emit('room-messages', roomMessages)
   })
 
-  socket.on('message-room', async(room, content, sender, time, date) => {
-    const newMessage = await Message.create({content, from: sender, time, date, to: room});
-    let roomMessages = await getLastMessagesFromRoom(room);
-    roomMessages = sortRoomMessagesByDate(roomMessages);
-    // sending message to room
-    io.to(room).emit('room-messages', roomMessages);
-    socket.broadcast.emit('notifications', room)
+  socket.on('message-room', async (room, content, sender, time, date) => {
+    const newMessage = await Message.create({ content, from: sender, time, date, to: room });
+
+    let ids = room.split('-');
+    if (bots.includes(ids[0]) || bots.includes(ids[1])) {
+        const bot = ids[0] === sender ? ids[1] : ids[0];
+        const apiResponse = await fetch("http://localhost:11434/api/generate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "llama3.2:1b",
+                prompt: prompt[bots.indexOf(bot)] + " " + content,
+                stream: false,
+            }),
+        });
+        const responseData = await apiResponse.json();
+        const response = responseData.response;
+        const botResponse = await Message.create({ content: response, from: bot, time, date, to: room });
+
+        // Emit updated messages to the room after bot response
+        let roomMessages = await getLastMessagesFromRoom(room);
+        roomMessages = sortRoomMessagesByDate(roomMessages);
+        io.to(room).emit('room-messages', roomMessages);
+    } else {
+        // Emit updated messages to the room for normal messages
+        let roomMessages = await getLastMessagesFromRoom(room);
+        roomMessages = sortRoomMessagesByDate(roomMessages);
+        io.to(room).emit('room-messages', roomMessages);
+    }
+
+    socket.broadcast.emit('notifications', room);
   })
 
   app.delete('/logout', async(req, res)=> {
@@ -92,6 +120,9 @@ app.get('/rooms', (req, res)=> {
   res.json(rooms)
 })
 
+app.get('/chatbots', (req, res)=>{
+  res.json(bots);
+})
 
 server.listen(PORT, ()=> {
   console.log('listening to port', PORT)
